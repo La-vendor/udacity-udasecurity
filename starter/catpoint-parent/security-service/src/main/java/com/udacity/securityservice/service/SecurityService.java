@@ -37,6 +37,10 @@ public class SecurityService {
     public void setArmingStatus(ArmingStatus armingStatus) {
         if(armingStatus == ArmingStatus.DISARMED) {
             setAlarmStatus(AlarmStatus.NO_ALARM);
+        }else if(armingStatus == ArmingStatus.ARMED_AWAY || armingStatus== ArmingStatus.ARMED_HOME){
+            for(Sensor sensor : securityRepository.getSensors()){
+                changeSensorActivationStatus(sensor,false);
+            }
         }
         securityRepository.setArmingStatus(armingStatus);
     }

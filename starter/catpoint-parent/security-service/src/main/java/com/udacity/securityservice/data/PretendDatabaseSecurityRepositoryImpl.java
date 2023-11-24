@@ -76,6 +76,11 @@ public class PretendDatabaseSecurityRepositoryImpl implements SecurityRepository
     }
 
     @Override
+    public boolean allSensorsInactive() {
+        return false;
+    }
+
+    @Override
     public Set<Sensor> getSensors() {
         return sensors;
     }
