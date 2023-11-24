@@ -11,6 +11,7 @@ public interface SecurityRepository {
     void updateSensor(Sensor sensor);
     void setAlarmStatus(AlarmStatus alarmStatus);
     void setArmingStatus(ArmingStatus armingStatus);
+    void resetAllSensors();
     boolean allSensorsInactive();
     Set<Sensor> getSensors();
     AlarmStatus getAlarmStatus();

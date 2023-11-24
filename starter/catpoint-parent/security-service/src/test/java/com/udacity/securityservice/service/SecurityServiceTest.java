@@ -1,6 +1,6 @@
 package com.udacity.securityservice.service;
 
-import com.udacity.imageservice.service.FakeImageService;
+import com.udacity.imageservice.service.ImageService;
 import com.udacity.securityservice.data.*;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -12,6 +12,7 @@ import org.junit.jupiter.params.provider.MethodSource;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.awt.image.BufferedImage;
 import java.util.stream.Stream;
 
 import static org.mockito.Mockito.*;
@@ -21,17 +22,18 @@ import static org.mockito.Mockito.*;
 class SecurityServiceTest {
 
     SecurityService securityService;
-    FakeImageService fakeImageService;
     Sensor sensor;
 
     @Mock
     SecurityRepository securityRepository;
 
+    @Mock
+    ImageService imageService;
 
     @BeforeEach
     void init() {
-        fakeImageService = new FakeImageService();
-        securityService = new SecurityService(securityRepository, fakeImageService);
+
+        securityService = new SecurityService(securityRepository, imageService);
         sensor = new Sensor("testSensor1", SensorType.DOOR);
     }
 
@@ -120,5 +122,55 @@ class SecurityServiceTest {
         verify(securityRepository, never()).setAlarmStatus(any(AlarmStatus.class));
     }
 
+    //7
+    @ParameterizedTest
+    @CsvSource({
+            "ARMED_HOME",
+            "ARMED_AWAY"
+    })
+    public void ifImageServiceDetectsCatAndSystemIsArmedChangeSystemStatusToAwooga(ArmingStatus armingStatus) {
+
+        BufferedImage image = new BufferedImage(600, 400, BufferedImage.TYPE_INT_RGB);
+        when(securityRepository.getArmingStatus()).thenReturn(armingStatus);
+        when(imageService.imageContainsCat(any(BufferedImage.class), anyFloat())).thenReturn(true);
+
+        securityService.processImage(image);
+
+        verify(securityRepository).setAlarmStatus(AlarmStatus.ALARM);
+    }
+
+    // 8
+    @Test
+    public void ifImageServiceDoesNotDetectCatAndSensorsAreNotActivatedChangeSystemStatusToNoAlarm() {
+
+        BufferedImage image = new BufferedImage(600, 400, BufferedImage.TYPE_INT_RGB);
+
+        when(imageService.imageContainsCat(any(BufferedImage.class), anyFloat())).thenReturn(false);
+        securityService.processImage(image);
+
+        verify(securityRepository).setAlarmStatus(AlarmStatus.NO_ALARM);
+    }
+
+    //9
+    @Test
+    public void ifSystemIsDisarmedSetSystemStatusToNoAlarm() {
+
+        securityService.setArmingStatus(ArmingStatus.DISARMED);
+
+        verify(securityRepository).setAlarmStatus(AlarmStatus.NO_ALARM);
+    }
+
+    //10
+    @ParameterizedTest
+    @CsvSource({
+            "ARMED_HOME",
+            "ARMED_AWAY"
+    })
+    public void ifSystemIsArmedResetAllSensorsToInactive(ArmingStatus armingStatus){
+
+        securityService.setArmingStatus(armingStatus);
+
+        verify(securityRepository).resetAllSensors();
+    }
 
 }

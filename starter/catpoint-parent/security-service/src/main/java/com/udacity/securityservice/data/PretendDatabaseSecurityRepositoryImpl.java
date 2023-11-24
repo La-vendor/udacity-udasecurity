@@ -76,6 +76,11 @@ public class PretendDatabaseSecurityRepositoryImpl implements SecurityRepository
     }
 
     @Override
+    public void resetAllSensors() {
+
+    }
+
+    @Override
     public boolean allSensorsInactive() {
         return false;
     }

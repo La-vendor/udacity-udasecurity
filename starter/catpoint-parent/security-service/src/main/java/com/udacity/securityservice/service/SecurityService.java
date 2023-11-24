@@ -1,6 +1,6 @@
 package com.udacity.securityservice.service;
 
-import com.udacity.imageservice.service.FakeImageService;
+import com.udacity.imageservice.service.ImageService;
 import com.udacity.securityservice.application.StatusListener;
 import com.udacity.securityservice.data.AlarmStatus;
 import com.udacity.securityservice.data.ArmingStatus;
@@ -20,11 +20,11 @@ import java.util.Set;
  */
 public class SecurityService {
 
-    private FakeImageService imageService;
+    private ImageService imageService;
     private SecurityRepository securityRepository;
     private Set<StatusListener> statusListeners = new HashSet<>();
 
-    public SecurityService(SecurityRepository securityRepository, FakeImageService imageService) {
+    public SecurityService(SecurityRepository securityRepository, ImageService imageService) {
         this.securityRepository = securityRepository;
         this.imageService = imageService;
     }
@@ -39,9 +39,7 @@ public class SecurityService {
         if (armingStatus == ArmingStatus.DISARMED) {
             setAlarmStatus(AlarmStatus.NO_ALARM);
         } else if (armingStatus == ArmingStatus.ARMED_AWAY || armingStatus == ArmingStatus.ARMED_HOME) {
-            for (Sensor sensor : securityRepository.getSensors()) {
-                changeSensorActivationStatus(sensor, false);
-            }
+            securityRepository.resetAllSensors();
         }
         securityRepository.setArmingStatus(armingStatus);
     }
@@ -53,7 +51,7 @@ public class SecurityService {
      * @param cat True if a cat is detected, otherwise false.
      */
     private void catDetected(Boolean cat) {
-        if (cat && getArmingStatus() == ArmingStatus.ARMED_HOME) {
+        if (cat && (getArmingStatus() == ArmingStatus.ARMED_HOME || getArmingStatus() == ArmingStatus.ARMED_AWAY)) {
             setAlarmStatus(AlarmStatus.ALARM);
         } else {
             setAlarmStatus(AlarmStatus.NO_ALARM);
