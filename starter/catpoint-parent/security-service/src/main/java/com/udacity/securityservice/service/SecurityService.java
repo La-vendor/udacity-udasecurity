@@ -32,14 +32,15 @@ public class SecurityService {
     /**
      * Sets the current arming status for the system. Changing the arming status
      * may update both the alarm status.
+     *
      * @param armingStatus
      */
     public void setArmingStatus(ArmingStatus armingStatus) {
-        if(armingStatus == ArmingStatus.DISARMED) {
+        if (armingStatus == ArmingStatus.DISARMED) {
             setAlarmStatus(AlarmStatus.NO_ALARM);
-        }else if(armingStatus == ArmingStatus.ARMED_AWAY || armingStatus== ArmingStatus.ARMED_HOME){
-            for(Sensor sensor : securityRepository.getSensors()){
-                changeSensorActivationStatus(sensor,false);
+        } else if (armingStatus == ArmingStatus.ARMED_AWAY || armingStatus == ArmingStatus.ARMED_HOME) {
+            for (Sensor sensor : securityRepository.getSensors()) {
+                changeSensorActivationStatus(sensor, false);
             }
         }
         securityRepository.setArmingStatus(armingStatus);
@@ -48,10 +49,11 @@ public class SecurityService {
     /**
      * Internal method that handles alarm status changes based on whether
      * the camera currently shows a cat.
+     *
      * @param cat True if a cat is detected, otherwise false.
      */
     private void catDetected(Boolean cat) {
-        if(cat && getArmingStatus() == ArmingStatus.ARMED_HOME) {
+        if (cat && getArmingStatus() == ArmingStatus.ARMED_HOME) {
             setAlarmStatus(AlarmStatus.ALARM);
         } else {
             setAlarmStatus(AlarmStatus.NO_ALARM);
@@ -62,6 +64,7 @@ public class SecurityService {
 
     /**
      * Register the StatusListener for alarm system updates from within the SecurityService.
+     *
      * @param statusListener
      */
     public void addStatusListener(StatusListener statusListener) {
@@ -74,6 +77,7 @@ public class SecurityService {
 
     /**
      * Change the alarm status of the system and notify all listeners.
+     *
      * @param status
      */
     public void setAlarmStatus(AlarmStatus status) {
@@ -85,10 +89,10 @@ public class SecurityService {
      * Internal method for updating the alarm status when a sensor has been activated.
      */
     private void handleSensorActivated() {
-        if(securityRepository.getArmingStatus() == ArmingStatus.DISARMED) {
+        if (securityRepository.getArmingStatus() == ArmingStatus.DISARMED) {
             return; //no problem if the system is disarmed
         }
-        switch(securityRepository.getAlarmStatus()) {
+        switch (securityRepository.getAlarmStatus()) {
             case NO_ALARM -> setAlarmStatus(AlarmStatus.PENDING_ALARM);
             case PENDING_ALARM -> setAlarmStatus(AlarmStatus.ALARM);
         }
@@ -98,21 +102,21 @@ public class SecurityService {
      * Internal method for updating the alarm status when a sensor has been deactivated
      */
     private void handleSensorDeactivated() {
-        switch(securityRepository.getAlarmStatus()) {
-            case PENDING_ALARM -> setAlarmStatus(AlarmStatus.NO_ALARM);
-            case ALARM -> setAlarmStatus(AlarmStatus.PENDING_ALARM);
+        if (securityRepository.getAlarmStatus() == AlarmStatus.PENDING_ALARM && securityRepository.allSensorsInactive()) {
+            setAlarmStatus(AlarmStatus.NO_ALARM);
         }
     }
 
     /**
      * Change the activation status for the specified sensor and update alarm status if necessary.
+     *
      * @param sensor
      * @param active
      */
     public void changeSensorActivationStatus(Sensor sensor, Boolean active) {
-        if(!sensor.getActive() && active) {
+        if (active) {
             handleSensorActivated();
-        } else if (sensor.getActive() && !active) {
+        } else if (sensor.getActive()) {
             handleSensorDeactivated();
         }
         sensor.setActive(active);
@@ -122,6 +126,7 @@ public class SecurityService {
     /**
      * Send an image to the SecurityService for processing. The securityService will use its provided
      * ImageService to analyze the image for cats and update the alarm status accordingly.
+     *
      * @param currentCameraImage
      */
     public void processImage(BufferedImage currentCameraImage) {
