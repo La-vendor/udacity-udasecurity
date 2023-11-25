@@ -14,7 +14,7 @@ import java.util.Set;
 /**
  * Service that receives information about changes to the security system. Responsible for
  * forwarding updates to the repository and making any decisions about changing the system state.
- *
+ * <p>
  * This is the class that should contain most of the business logic for our system, and it is the
  * class you will be writing unit tests for.
  */
@@ -38,10 +38,17 @@ public class SecurityService {
     public void setArmingStatus(ArmingStatus armingStatus) {
         if (armingStatus == ArmingStatus.DISARMED) {
             setAlarmStatus(AlarmStatus.NO_ALARM);
-        } else if (armingStatus == ArmingStatus.ARMED_AWAY || armingStatus == ArmingStatus.ARMED_HOME) {
+        } else if (armingStatus == ArmingStatus.ARMED_HOME) {
+            if (securityRepository.isCatDetected()) {
+                setAlarmStatus(AlarmStatus.ALARM);
+            }
+            securityRepository.resetAllSensors();
+        } else {
             securityRepository.resetAllSensors();
         }
         securityRepository.setArmingStatus(armingStatus);
+
+        statusListeners.forEach(StatusListener::sensorStatusChanged);
     }
 
     /**
@@ -51,10 +58,17 @@ public class SecurityService {
      * @param cat True if a cat is detected, otherwise false.
      */
     private void catDetected(Boolean cat) {
-        if (cat && (getArmingStatus() == ArmingStatus.ARMED_HOME || getArmingStatus() == ArmingStatus.ARMED_AWAY)) {
-            setAlarmStatus(AlarmStatus.ALARM);
+        if (cat) {
+            securityRepository.catDetected(true);
+            if (getArmingStatus() == ArmingStatus.ARMED_HOME) {
+                setAlarmStatus(AlarmStatus.ALARM);
+            }
+
         } else {
-            setAlarmStatus(AlarmStatus.NO_ALARM);
+            securityRepository.catDetected(false);
+            if(securityRepository.allSensorsInactive()) {
+                setAlarmStatus(AlarmStatus.NO_ALARM);
+            }
         }
 
         statusListeners.forEach(sl -> sl.catDetected(cat));

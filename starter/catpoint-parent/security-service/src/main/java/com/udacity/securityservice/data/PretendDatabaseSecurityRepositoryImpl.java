@@ -19,6 +19,8 @@ public class PretendDatabaseSecurityRepositoryImpl implements SecurityRepository
     private AlarmStatus alarmStatus;
     private ArmingStatus armingStatus;
 
+    private boolean catDetected;
+
     //preference keys
     private static final String SENSORS = "SENSORS";
     private static final String ALARM_STATUS = "ALARM_STATUS";
@@ -60,7 +62,7 @@ public class PretendDatabaseSecurityRepositoryImpl implements SecurityRepository
     public void updateSensor(Sensor sensor) {
         sensors.remove(sensor);
         sensors.add(sensor);
-        prefs.put(SENSORS, gson.toJson(sensors));
+//        prefs.put(SENSORS, gson.toJson(sensors));
     }
 
     @Override
@@ -77,12 +79,25 @@ public class PretendDatabaseSecurityRepositoryImpl implements SecurityRepository
 
     @Override
     public void resetAllSensors() {
+        for(Sensor sensor : sensors){
+            sensor.setActive(false);
+            prefs.put(SENSORS, gson.toJson(sensors));
+        }
+    }
 
+    @Override
+    public void catDetected(boolean cat) {
+        this.catDetected = cat;
     }
 
     @Override
     public boolean allSensorsInactive() {
         return false;
+    }
+
+    @Override
+    public boolean isCatDetected() {
+        return this.catDetected;
     }
 
     @Override

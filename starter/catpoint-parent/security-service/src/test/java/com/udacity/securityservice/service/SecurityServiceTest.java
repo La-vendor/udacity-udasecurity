@@ -1,6 +1,7 @@
 package com.udacity.securityservice.service;
 
 import com.udacity.imageservice.service.ImageService;
+import com.udacity.securityservice.application.StatusListener;
 import com.udacity.securityservice.data.*;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -30,10 +31,15 @@ class SecurityServiceTest {
     @Mock
     ImageService imageService;
 
+    @Mock
+    StatusListener statusListener;
+
     @BeforeEach
     void init() {
 
         securityService = new SecurityService(securityRepository, imageService);
+        securityService.addStatusListener(statusListener);
+
         sensor = new Sensor("testSensor1", SensorType.DOOR);
     }
 
@@ -123,15 +129,11 @@ class SecurityServiceTest {
     }
 
     //7
-    @ParameterizedTest
-    @CsvSource({
-            "ARMED_HOME",
-            "ARMED_AWAY"
-    })
-    public void ifImageServiceDetectsCatAndSystemIsArmedChangeSystemStatusToAwooga(ArmingStatus armingStatus) {
+    @Test
+    public void ifImageServiceDetectsCatWhileSystemIsArmedHomeChangeSystemStatusToAwooga() {
 
         BufferedImage image = new BufferedImage(600, 400, BufferedImage.TYPE_INT_RGB);
-        when(securityRepository.getArmingStatus()).thenReturn(armingStatus);
+        when(securityRepository.getArmingStatus()).thenReturn(ArmingStatus.ARMED_HOME);
         when(imageService.imageContainsCat(any(BufferedImage.class), anyFloat())).thenReturn(true);
 
         securityService.processImage(image);
@@ -146,6 +148,7 @@ class SecurityServiceTest {
         BufferedImage image = new BufferedImage(600, 400, BufferedImage.TYPE_INT_RGB);
 
         when(imageService.imageContainsCat(any(BufferedImage.class), anyFloat())).thenReturn(false);
+        when(securityRepository.allSensorsInactive()).thenReturn(true);
         securityService.processImage(image);
 
         verify(securityRepository).setAlarmStatus(AlarmStatus.NO_ALARM);
@@ -171,6 +174,16 @@ class SecurityServiceTest {
         securityService.setArmingStatus(armingStatus);
 
         verify(securityRepository).resetAllSensors();
+    }
+
+    @Test
+    public void ifSystemIsArmedHomeWhileCatIsDetectedPutSystemInAlarm(){
+
+        when(securityRepository.isCatDetected()).thenReturn(true);
+
+        securityService.setArmingStatus(ArmingStatus.ARMED_HOME);
+
+        verify(securityRepository).setAlarmStatus(AlarmStatus.ALARM);
     }
 
 }
