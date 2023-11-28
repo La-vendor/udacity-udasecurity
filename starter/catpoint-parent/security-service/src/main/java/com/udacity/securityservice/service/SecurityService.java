@@ -63,14 +63,12 @@ public class SecurityService {
             if (getArmingStatus() == ArmingStatus.ARMED_HOME) {
                 setAlarmStatus(AlarmStatus.ALARM);
             }
-
         } else {
             securityRepository.catDetected(false);
             if(securityRepository.allSensorsInactive()) {
                 setAlarmStatus(AlarmStatus.NO_ALARM);
             }
         }
-
         statusListeners.forEach(sl -> sl.catDetected(cat));
     }
 
@@ -101,20 +99,20 @@ public class SecurityService {
      * Internal method for updating the alarm status when a sensor has been activated.
      */
     private void handleSensorActivated() {
-        if (securityRepository.getArmingStatus() == ArmingStatus.DISARMED) {
+        if (getArmingStatus() == ArmingStatus.DISARMED) {
             return; //no problem if the system is disarmed
         }
-        switch (securityRepository.getAlarmStatus()) {
+        switch (getAlarmStatus()) {
             case NO_ALARM -> setAlarmStatus(AlarmStatus.PENDING_ALARM);
             case PENDING_ALARM -> setAlarmStatus(AlarmStatus.ALARM);
-        }
+                    }
     }
 
     /**
      * Internal method for updating the alarm status when a sensor has been deactivated
      */
     private void handleSensorDeactivated() {
-        if (securityRepository.getAlarmStatus() == AlarmStatus.PENDING_ALARM && securityRepository.allSensorsInactive()) {
+        if (getAlarmStatus() == AlarmStatus.PENDING_ALARM && securityRepository.allSensorsInactive()) {
             setAlarmStatus(AlarmStatus.NO_ALARM);
         }
     }
@@ -126,12 +124,14 @@ public class SecurityService {
      * @param active
      */
     public void changeSensorActivationStatus(Sensor sensor, Boolean active) {
+
         if (active) {
+            sensor.setActive(true);
             handleSensorActivated();
         } else if (sensor.getActive()) {
+            sensor.setActive(false);
             handleSensorDeactivated();
         }
-        sensor.setActive(active);
         securityRepository.updateSensor(sensor);
     }
 

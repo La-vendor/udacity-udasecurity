@@ -176,6 +176,7 @@ class SecurityServiceTest {
         verify(securityRepository).resetAllSensors();
     }
 
+    //11
     @Test
     public void ifSystemIsArmedHomeWhileCatIsDetectedPutSystemInAlarm(){
 

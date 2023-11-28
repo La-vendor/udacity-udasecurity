@@ -5,6 +5,7 @@ import com.udacity.securityservice.data.ArmingStatus;
 import com.udacity.securityservice.data.SecurityRepository;
 import com.udacity.securityservice.data.Sensor;
 
+import java.util.HashSet;
 import java.util.Set;
 
 public class FakeSecurityRepository implements SecurityRepository {
@@ -14,6 +15,11 @@ public class FakeSecurityRepository implements SecurityRepository {
     private ArmingStatus armingStatus;
 
     private boolean catDetected;
+
+    public FakeSecurityRepository() {
+
+        sensors = new HashSet<>();
+    }
 
     @Override
     public void addSensor(Sensor sensor) {
@@ -55,7 +61,10 @@ public class FakeSecurityRepository implements SecurityRepository {
 
     @Override
     public boolean allSensorsInactive() {
-        return false;
+        for(Sensor sensor : sensors){
+            if (sensor.getActive()) return false;
+        }
+        return true;
     }
 
     @Override

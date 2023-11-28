@@ -92,7 +92,10 @@ public class PretendDatabaseSecurityRepositoryImpl implements SecurityRepository
 
     @Override
     public boolean allSensorsInactive() {
-        return false;
+        for(Sensor sensor : sensors){
+            if (sensor.getActive()) return false;
+        }
+        return true;
     }
 
     @Override
